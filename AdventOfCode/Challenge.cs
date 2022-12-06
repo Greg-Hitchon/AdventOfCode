@@ -10,15 +10,45 @@ namespace AdventOfCode
    
     public static class Challenge
     {  
-        public static int GetResult()
+        private static List<List<string>> GetInitial(List<string> lines)
+        {
+            List<List<string>> list = new List<List<string>>();
+            for (int i = 0; i < 9; i++)
+            {
+                list.Add(new List<string>());
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    if(lines[i][j*4 + 1].ToString() != " ")
+                    {
+                        list[j].Add(lines[i][j * 4 + 1].ToString());
+                    }
+                }
+            }
+
+            return list.Select(x => (x.AsEnumerable()).ToList()).ToList();
+
+        }
+
+
+        public static string GetResult()
         {
             List<string> inputLines = File.ReadAllLines(Path.Combine(Globals.RootInputPath, "Input.txt")).ToList();
-            var input = inputLines.Select(x=>new Tuple<List<int>, List<int>>(
-                Enumerable.Range(int.Parse(x.Split(",")[0].Split("-")[0]), int.Parse(x.Split(",")[0].Split("-")[1]) - int.Parse(x.Split(",")[0].Split("-")[0]) + 1).ToList(),
-                Enumerable.Range(int.Parse(x.Split(",")[1].Split("-")[0]), int.Parse(x.Split(",")[1].Split("-")[1]) - int.Parse(x.Split(",")[1].Split("-")[0]) + 1).ToList()
-            )).Where(x=>x.Item1.Any(x1 => x.Item2.Contains(x1)) || x.Item2.Any(x1 => x.Item1.Contains(x1))).ToList();
+            var state = GetInitial(inputLines);
+            var moves = inputLines.Skip(10).Select(x => new Tuple<int, int, int>(int.Parse(x.Split(' ')[1]), int.Parse(x.Split(' ')[3]), int.Parse(x.Split(' ')[5]))).ToList();
 
-            return input.Count;
+            foreach (var move in moves)
+            {
+                var source = state[move.Item2 - 1].Take(move.Item1).ToList();
+                //source.Reverse();
+                state[move.Item2 - 1].RemoveRange(0, move.Item1);
+                state[move.Item3 - 1].InsertRange(0, source);
+            }
+
+            return string.Join("", state.Where(x=>x.Count> 0).Select(x=>x[0]));
         }
     }
 }
