@@ -10,45 +10,42 @@ namespace AdventOfCode
    
     public static class Challenge
     {  
-        private static List<List<string>> GetInitial(List<string> lines)
-        {
-            List<List<string>> list = new List<List<string>>();
-            for (int i = 0; i < 9; i++)
-            {
-                list.Add(new List<string>());
-            }
 
-            for (int i = 0; i < 8; i++)
+        public static int GetResult()
+        {
+            List<string> inputLines = File.ReadAllLines(Path.Combine(Globals.RootInputPath, "Input.txt")).ToList();
+            //string input = File.ReadAllText(Path.Combine(Globals.RootInputPath, "Input.txt"));
+
+
+            var results = new Dictionary<string, int>();
+            List<string> currentPaths = new List<string>();
+
+            foreach (var line in inputLines)
             {
-                for (int j = 0; j < 9; j++)
+                if (line.StartsWith("$ cd ") && !line.Contains("."))
                 {
-                    if(lines[i][j*4 + 1].ToString() != " ")
+                    string currentPath = string.Join("//", currentPaths) + "//" + $"{line.Split(" ")[2]}";
+                    currentPaths.Add(currentPath);
+                    results.Add(currentPath, 0);
+                }
+                else if(line == "$ cd ..")
+                {
+                    currentPaths.RemoveAt(currentPaths.Count - 1);
+                }
+                else if(!line.StartsWith("dir") && !line.StartsWith("$"))
+                {
+                    int size = int.Parse(line.Split(" ")[0]);
+                    foreach (var path in currentPaths)
                     {
-                        list[j].Add(lines[i][j * 4 + 1].ToString());
+                        results[path] += size;
                     }
                 }
             }
 
-            return list.Select(x => (x.AsEnumerable()).ToList()).ToList();
+            int used = results["///"];
+            int needed = used - 40000000;
 
-        }
-
-
-        public static string GetResult()
-        {
-            List<string> inputLines = File.ReadAllLines(Path.Combine(Globals.RootInputPath, "Input.txt")).ToList();
-            var state = GetInitial(inputLines);
-            var moves = inputLines.Skip(10).Select(x => new Tuple<int, int, int>(int.Parse(x.Split(' ')[1]), int.Parse(x.Split(' ')[3]), int.Parse(x.Split(' ')[5]))).ToList();
-
-            foreach (var move in moves)
-            {
-                var source = state[move.Item2 - 1].Take(move.Item1).ToList();
-                //source.Reverse();
-                state[move.Item2 - 1].RemoveRange(0, move.Item1);
-                state[move.Item3 - 1].InsertRange(0, source);
-            }
-
-            return string.Join("", state.Where(x=>x.Count> 0).Select(x=>x[0]));
+            return results.Select(x => x.Value).OrderBy(x => x).FirstOrDefault(x => x >= needed);
         }
     }
 }
